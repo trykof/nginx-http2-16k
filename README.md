@@ -171,9 +171,10 @@ Verify the public endpoint and advertised settings:
 curl --fail --show-error --http2 https://de.cresset.digital/ -o /dev/null
 nghttp -nv https://de.cresset.digital/ 2>&1 | tee nginx-http2-verification.log
 python3 - <<'PY'
+import re
 from pathlib import Path
 text = Path('nginx-http2-verification.log').read_text()
-assert 'SETTINGS_MAX_FRAME_SIZE:16384' in text.replace(' ', ''), text
+assert re.search(r'SETTINGS_MAX_FRAME_SIZE(?:\(0x0*5\))?\s*:\s*16384\b', text), text
 assert 'The negotiated protocol: h2' in text, text
 PY
 ```
