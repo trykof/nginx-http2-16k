@@ -1,0 +1,25 @@
+--- a/src/http/v2/ngx_http_v2.c
++++ b/src/http/v2/ngx_http_v2.c
+@@ -894,6 +894,13 @@
+     head = ngx_http_v2_parse_uint32(pos);
+ 
+     h2c->state.length = ngx_http_v2_parse_length(head);
++
++    if (h2c->state.length > NGX_HTTP_V2_DEFAULT_FRAME_SIZE) {
++        ngx_log_error(NGX_LOG_INFO, h2c->connection->log, 0,
++                      "client sent frame exceeding advertised maximum size");
++
++        return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_SIZE_ERROR);
++    }
+     h2c->state.flags = pos[4];
+ 
+     h2c->state.sid = ngx_http_v2_parse_sid(&pos[5]);
+@@ -2774,7 +2781,7 @@
+     buf->last = ngx_http_v2_write_uint16(buf->last,
+                                          NGX_HTTP_V2_MAX_FRAME_SIZE_SETTING);
+     buf->last = ngx_http_v2_write_uint32(buf->last,
+-                                         NGX_HTTP_V2_MAX_FRAME_SIZE);
++                                         NGX_HTTP_V2_DEFAULT_FRAME_SIZE);
+ 
+     ngx_http_v2_queue_blocked_frame(h2c, frame);
+ 

@@ -1,0 +1,82 @@
+name: Build, validate and publish
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nginx-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Build runtime
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          load: true
+          platforms: linux/${{ matrix.arch }}
+          tags: cresset-nginx:${{ matrix.arch }}
+          build-args: |
+            SOURCE_URL=https://github.com/${{ github.repository }}
+            REVISION=${{ github.sha }}
+      - name: Test patched runtime
+        env:
+          PLATFORM: linux/${{ matrix.arch }}
+        run: |
+          mkdir -p artifacts
+          set -o pipefail
+          scripts/test.sh cresset-nginx:${{ matrix.arch }} 2>&1 | tee artifacts/patched.log
+      - name: Compare official runtime
+        env:
+          PLATFORM: linux/${{ matrix.arch }}
+          EXPECTED_FRAME_SIZE: '16777215'
+        run: |
+          set -o pipefail
+          scripts/test.sh nginx:1.30.6-alpine@sha256:583b7f2fce1cdb8da5ad5c39ebd3c33b98b87d493190e548bdee1fa8c619c311 2>&1 | tee artifacts/baseline.log
+      - name: Save tested image
+        run: docker save cresset-nginx:${{ matrix.arch }} -o artifacts/image.tar
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: validated-${{ matrix.arch }}
+          path: artifacts/
+          retention-days: 14
+  publish:
+    needs: validate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: validated-*
+          path: artifacts
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish tested images and manifest
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REVISION: ${{ github.sha }}
+        run: scripts/publish.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: published-digest
+          path: artifacts/published.txt

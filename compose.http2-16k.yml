@@ -1,0 +1,4 @@
+# Merge with the existing deployment; keep its service name and all mounts.
+services:
+  nginx:
+    image: ${CRESSET_NGINX_IMAGE:?Set the verified GHCR image with its sha256 digest}
