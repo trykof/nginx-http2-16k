@@ -20,9 +20,9 @@ error `FRAME_SIZE_ERROR` (6). No production configuration is bundled or changed.
 
 The builder uses the exact configure arguments reported by the pinned official
 binary, including TLS, HTTP/2, HTTP/3, real IP, stream, mail and compatibility flags.
-Only the stripped executable is copied into the official runtime. Compilers and
-headers stay in the builder. All shipped non-debug dynamic modules are loaded by
-`nginx -t` in integration tests to detect ABI incompatibilities.
+Both stripped executables (`nginx` and `nginx-debug`) are patched and copied into the official runtime. Compilers and
+headers stay in the builder. All shipped dynamic modules are loaded by their matching release/debug binary in
+integration tests to detect ABI incompatibilities.
 
 The base and source are immutable inputs. Alpine build dependencies come from the
 base's release repositories; builds are reproducible in procedure, not promised to
@@ -65,9 +65,9 @@ tests do not measure Xray or iOS Network Extension memory usage.
 ## Validation
 
 `scripts/test.sh IMAGE` first runs the unmodified runtime's `nginx -t`. It then
-builds an ephemeral test image containing the exact same executable plus Python,
+builds an ephemeral test image containing the exact same executables plus Python,
 OpenSSL and pinned hyper-h2 libraries. No test tools enter the published image.
-The protocol harness starts that executable, a local HTTP upstream and HTTP/2 gRPC
+The protocol harness tests each executable with a local HTTP upstream and HTTP/2 gRPC
 mock upstreams on TCP and Unix sockets. It checks:
 
 - Verified local TLS certificate, ALPN `h2`, explicit SETTINGS value and GET.
@@ -79,7 +79,8 @@ mock upstreams on TCP and Unix sockets. It checks:
   A subsequent request on the same frontend connection must succeed.
 - No unexpected RST_STREAM, GOAWAY or PROTOCOL_ERROR during valid transfers.
 - A clean client close; an oversized unknown frame must produce GOAWAY error 6.
-- Loading every shipped non-debug dynamic module and Nginx's clean process exit.
+- Loading every shipped release/debug dynamic module with its matching binary and
+  checking Nginx's clean process exit.
 
 Compare the official image using the same suite:
 

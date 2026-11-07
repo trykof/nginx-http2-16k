@@ -15,6 +15,7 @@ import h2.connection
 import h2.events
 import h2.settings
 
+NGINX_BINARY = os.environ.get("NGINX_BINARY", "nginx")
 EXPECTED = int(os.environ.get("EXPECTED_FRAME_SIZE", "16384"))
 LARGE = b"cresset-stream-data\n" * 131072
 UPLOAD_PROGRESS = 0
@@ -367,7 +368,7 @@ async def main() -> None:
     modules = "\n".join(
         f"load_module {path};"
         for path in sorted(Path("/usr/lib/nginx/modules").glob("*.so"))
-        if "-debug" not in path.name
+        if ("-debug" in path.name) == NGINX_BINARY.endswith("-debug")
     )
     conf = f"""{modules}
 user nginx;
@@ -398,10 +399,11 @@ http {{
 """
     (root / "nginx.conf").write_text(conf)
     await asyncio.to_thread(
-        subprocess.run, ["nginx", "-t", "-c", str(root / "nginx.conf")], check=True
+        subprocess.run, [NGINX_BINARY, "-t", "-c", str(root / "nginx.conf")], check=True
     )
     proc = await asyncio.to_thread(
-        subprocess.Popen, ["nginx", "-c", str(root / "nginx.conf"), "-g", "daemon off;"]
+        subprocess.Popen,
+        [NGINX_BINARY, "-c", str(root / "nginx.conf"), "-g", "daemon off;"],
     )
     started = time.monotonic()
     try:

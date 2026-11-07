@@ -15,7 +15,15 @@ RUN patch --dry-run --fuzz=0 -p1 < http2.patch \
     && test -n "$configure" \
     && eval "./configure $configure" \
     && make -j2 \
-    && strip objs/nginx
+    && strip objs/nginx \
+    && cp objs/nginx /build/nginx-release \
+    && configure="$(nginx-debug -V 2>&1 | sed -n 's/^configure arguments: //p')" \
+    && test -n "$configure" \
+    && make clean \
+    && eval "./configure $configure" \
+    && make -j2 \
+    && strip objs/nginx \
+    && cp objs/nginx /build/nginx-debug
 
 FROM ${NGINX_BASE} AS runtime
 ARG SOURCE_URL
@@ -24,5 +32,6 @@ LABEL org.opencontainers.image.title="Cresset Nginx HTTP/2 16 KiB" \
       org.opencontainers.image.version="1.30.6-16k-r1" \
       org.opencontainers.image.source="${SOURCE_URL}" \
       org.opencontainers.image.revision="${REVISION}"
-COPY --from=builder /build/objs/nginx /usr/sbin/nginx
-RUN nginx -t
+COPY --from=builder /build/nginx-release /usr/sbin/nginx
+COPY --from=builder /build/nginx-debug /usr/sbin/nginx-debug
+RUN nginx -t && nginx-debug -t
