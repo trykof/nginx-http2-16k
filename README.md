@@ -6,13 +6,15 @@ error `FRAME_SIZE_ERROR` (6). No production configuration is bundled or changed.
 
 ## Build and source provenance
 
-- Nginx: **1.30.6**, patch revision **16k-r1**.
+- Nginx: **1.30.7**, patch revision **16k-r2**. This stable security release fixes
+  [CVE-2026-123007 and CVE-2026-123633](https://nginx.org/en/security_advisories.html)
+  in HTTP/2. The 16 KiB patch applies unchanged.
 - Platforms: `linux/amd64` and `linux/arm64`, validated separately on native CI runners.
-- Official runtime: `nginx:1.30.6-alpine`, pinned by multi-platform manifest digest in
+- Official runtime: `nginx:1.30.7-alpine`, pinned by multi-platform manifest digest in
   `Dockerfile`. Its entrypoint, nginx user, configuration paths, log symlinks,
   certificates/mount conventions and shipped dynamic modules are retained.
-- Source: <https://nginx.org/download/nginx-1.30.6.tar.gz>.
-- SHA-256: `3cf46f5ed7504d460125866b7bea99fb357f31d887e2e63b35503310e9b8b6c8`.
+- Source: <https://nginx.org/download/nginx-1.30.7.tar.gz>.
+- SHA-256: `2565b5c837050e958f70fb0f73c48e2bca4542ad349fd356f46fb0c72610bc6e`.
 - The source archive was verified against its detached PGP signature using the
   official Sergey Kandaurov key from <https://nginx.org/keys/pluknet.key>, fingerprint
   `D6786CE303D9A9022998DC6CC8464D549AF75C0A`, listed at
@@ -86,7 +88,7 @@ Compare the official image using the same suite:
 
 ```sh
 EXPECTED_FRAME_SIZE=16777215 scripts/test.sh \
-  nginx:1.30.6-alpine@sha256:583b7f2fce1cdb8da5ad5c39ebd3c33b98b87d493190e548bdee1fa8c619c311
+  nginx:1.30.7-alpine@sha256:caf4e1e032a20f9c3c5e28fc7f25ffd768ad8677b4975c54193075997b3a97e3
 ```
 
 Only the oversized-frame enforcement test is skipped for that baseline. Real Xray
@@ -107,10 +109,10 @@ then creates a multi-platform manifest. The publish job alone gets
 Tags include the entire Git commit:
 
 ```text
-1.30.6-16k-r1-<full-git-commit>
+1.30.7-16k-r2-<full-git-commit>
 sha-<full-git-commit>
-1.30.6-16k-r1-<full-git-commit>-amd64
-1.30.6-16k-r1-<full-git-commit>-arm64
+1.30.7-16k-r2-<full-git-commit>-amd64
+1.30.7-16k-r2-<full-git-commit>-arm64
 ```
 
 The script refuses to overwrite existing architecture tags. Use the manifest digest

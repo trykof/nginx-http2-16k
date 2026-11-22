@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1.7
-ARG NGINX_BASE=nginx:1.30.6-alpine@sha256:583b7f2fce1cdb8da5ad5c39ebd3c33b98b87d493190e548bdee1fa8c619c311
+ARG NGINX_BASE=nginx:1.30.7-alpine@sha256:caf4e1e032a20f9c3c5e28fc7f25ffd768ad8677b4975c54193075997b3a97e3
 FROM ${NGINX_BASE} AS builder
-ARG NGINX_VERSION=1.30.6
-ARG NGINX_SHA256=3cf46f5ed7504d460125866b7bea99fb357f31d887e2e63b35503310e9b8b6c8
+ARG NGINX_VERSION=1.30.7
+ARG NGINX_SHA256=2565b5c837050e958f70fb0f73c48e2bca4542ad349fd356f46fb0c72610bc6e
 RUN apk add --no-cache build-base linux-headers openssl-dev pcre2-dev zlib-dev patch
 WORKDIR /build
 RUN curl -fsSLo nginx.tar.gz "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" \
@@ -29,7 +29,7 @@ FROM ${NGINX_BASE} AS runtime
 ARG SOURCE_URL
 ARG REVISION
 LABEL org.opencontainers.image.title="Cresset Nginx HTTP/2 16 KiB" \
-      org.opencontainers.image.version="1.30.6-16k-r1" \
+      org.opencontainers.image.version="1.30.7-16k-r2" \
       org.opencontainers.image.source="${SOURCE_URL}" \
       org.opencontainers.image.revision="${REVISION}"
 COPY --from=builder /build/nginx-release /usr/sbin/nginx

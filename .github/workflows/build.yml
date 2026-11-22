@@ -45,7 +45,7 @@ jobs:
           EXPECTED_FRAME_SIZE: '16777215'
         run: |
           set -o pipefail
-          scripts/test.sh nginx:1.30.6-alpine@sha256:583b7f2fce1cdb8da5ad5c39ebd3c33b98b87d493190e548bdee1fa8c619c311 2>&1 | tee artifacts/baseline.log
+          scripts/test.sh nginx:1.30.7-alpine@sha256:caf4e1e032a20f9c3c5e28fc7f25ffd768ad8677b4975c54193075997b3a97e3 2>&1 | tee artifacts/baseline.log
       - name: Save tested image
         run: docker save cresset-nginx:${{ matrix.arch }} -o artifacts/image.tar
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

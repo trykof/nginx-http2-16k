@@ -3,7 +3,7 @@ set -eu
 : "${REPOSITORY:?Set REPOSITORY to owner/repository}"
 : "${REVISION:?Set REVISION to the full Git commit}"
 image="ghcr.io/$(printf '%s' "$REPOSITORY" | tr '[:upper:]' '[:lower:]')"
-tag="1.30.6-16k-r1-${REVISION}"
+tag="1.30.7-16k-r2-${REVISION}"
 # Refuse to overwrite an existing tag, including on workflow reruns.
 for arch in amd64 arm64; do
     if docker buildx imagetools inspect "$image:$tag-$arch" > /dev/null 2>&1; then
